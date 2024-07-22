@@ -3,19 +3,22 @@ import random
 import pygame
 import Piece
 
-s_width = 800
+s_width = 600
 s_height = 700
 play_width = 300  # meaning 300 // 10 = 30 width per block
 play_height = 600  # meaning 600 // 20 = 20 height per blo ck
+play_offset = 120  # meaning 600 // 20 = 20 height per blo ck
+
 block_size = 30
 
-top_left_x = (s_width - play_width) // 2
+top_left_x = (s_width - play_width - play_offset) // 2
 top_left_y = s_height - play_height
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, seed):
         self.grid = None
+        self.randomizer = random.Random(seed)
         self.locked_positions = {}
         self.clock = pygame.time.Clock()
         self.create_grid(self.locked_positions)
@@ -127,7 +130,7 @@ class Game:
         return False
 
     def get_shape(self):
-        return Piece.Piece(5, 0, random.choice(Piece.shapes))
+        return Piece.Piece(5, 0, self.randomizer.choice(Piece.shapes))
 
     def draw_grid(self, surface, row, col):
         sx = top_left_x
@@ -161,12 +164,20 @@ class Game:
                 if y < ind:
                     newKey = (x, y + inc)
                     locked[newKey] = locked.pop(key)
+            if inc == 1:
+                self.score += 10
+            elif inc == 2:
+                self.score += 25
+            elif inc == 3:
+                self.score += 45
+            elif inc == 4:
+                self.score += 70
 
     def draw_next_shape(self, shape, surface):
         font = pygame.font.SysFont('comicsans', 30)
         label = font.render('Next Shape', 1, (255, 255, 255))
 
-        sx = top_left_x + play_width + 50
+        sx = top_left_x + play_width + 30
         sy = top_left_y + play_height / 2 - 100
         format = shape.shape[shape.rotation % len(shape.shape)]
 
@@ -194,6 +205,7 @@ class Game:
         self.draw_grid(surface, 20, 10)
         pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
         # pygame.display.update()
+        draw_text(f"score: {self.score}",20,(255,255,255), surface,20,20)
 
     def move_left(self):
         self.current_piece.x -= 1
@@ -227,3 +239,8 @@ def draw_text_middle(text, size, color, surface):
     surface.blit(label, (
         top_left_x + play_width / 2 - (label.get_width() / 2),
         top_left_y + play_height / 2 - label.get_height() / 2))
+
+def draw_text(text, size, color, surface,x,y):
+    font = pygame.font.SysFont('comicsans', size, bold=True)
+    label = font.render(text, 1, color)
+    surface.blit(label, (x, y))
