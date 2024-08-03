@@ -4,8 +4,9 @@ from Player import Player
 
 
 class HumanPlayer(Player):
-    def __init__(self, name,game):
-        super().__init__(name,game)
+
+    def __init__(self, name, game):
+        super().__init__(name, game)
 
     def handle_input(self):
         for event in pygame.event.get():

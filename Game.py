@@ -33,6 +33,8 @@ class Game:
         self.level_time = 0
         self.fall_speed = 0.27
         self.score = 0
+        # self.seed = seed  # save seed
+        # random.seed(seed)  # set random seed
 
     def update(self, win):
 
@@ -194,7 +196,7 @@ class Game:
 
         for index, shape in enumerate(shapes):
             format = shape.shape[shape.rotation % len(shape.shape)]
-            shape_sy = sy + index * offset_y  # 根据索引调整y轴位置
+            shape_sy = sy + index * offset_y  # adjust each shape's y position according to index
 
             for i, line in enumerate(format):
                 row = list(line)
@@ -253,6 +255,38 @@ class Game:
     def quit(self):
         self.run = False
         pygame.display.quit()
+
+    # def copy(self):
+    #     # create a new Game
+    #     new_game = Game(self.seed)
+
+    #     # copy all we need
+    #     new_game.grid = [row[:] for row in self.grid]
+    #     new_game.current_piece = self.current_piece.copy()
+    #     new_game.next_pieces = [piece.copy() for piece in self.next_pieces]
+    #     new_game.score = self.score
+    #     new_game.run = self.run
+
+    #     return new_game
+
+    # def lock_piece(self):
+    #     shape_pos = self.convert_shape_format(self.current_piece)
+    #     # lock current piece's position to locked_positions
+    #     for pos in shape_pos:
+    #         p = (pos[0], pos[1])
+    #         self.locked_positions[p] = self.current_piece.color
+
+    #     # add points if rows cleared
+    #     rows_cleared = self.clear_rows(self.grid, self.locked_positions)
+    #     if rows_cleared:
+    #         self.score += 10 * rows_cleared  # according to evaluate_state()
+
+    #     # get next piece
+    #     self.current_piece = self.next_pieces.pop(0)
+    #     self.next_pieces.append(self.get_shape())
+
+    #     if self.check_lost(self.locked_positions):
+    #         self.run = False
 
 
 def draw_text_middle(text, size, color, surface):

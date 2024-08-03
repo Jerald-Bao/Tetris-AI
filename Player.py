@@ -5,7 +5,8 @@ from Game import Game
 
 
 class Player:
-    def __init__(self, name,game):
+
+    def __init__(self, name, game):
         self.name = name
         self.game = game
         self.commands = {
@@ -22,4 +23,3 @@ class Player:
             queued_commands = self.command_queue.pop()
             if queued_commands in self.commands:
                 self.commands[queued_commands]()
-
