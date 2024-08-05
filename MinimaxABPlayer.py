@@ -8,20 +8,48 @@ class MinimaxABPlayer(Player):
         self.depth = depth
 
     def evaluate_state(self, game):
-        # heuristic function
         grid = game.grid
         score = 0
 
         # 1. number of cleared rows
         score += game.score * 10
 
-        # 2. height
-        max_height = 0
-        for x in range(len(grid)):
-            for y in range(len(grid[x])):
-                if grid[x][y] != (0, 0, 0):
-                    max_height = max(max_height, y)
-        score -= max_height * 5
+        # 2. aggregate height
+        heights = [0] * len(grid[0])
+        for x in range(len(grid[0])):
+            for y in range(len(grid)):
+                if grid[y][x] != (0, 0, 0):
+                    heights[x] = len(grid) - y
+                    break
+        aggregate_height = sum(heights)
+        score -= aggregate_height * 1
+
+        # 3. number of holes
+        holes = 0
+        for x in range(len(grid[0])):
+            block_found = False
+            for y in range(len(grid)):
+                if grid[y][x] != (0, 0, 0):
+                    block_found = True
+                elif block_found:
+                    holes += 1
+        score -= holes * 5
+
+        # 4. bumpiness
+        bumpiness = 0
+        for i in range(len(heights) - 1):
+            bumpiness += abs(heights[i] - heights[i + 1])
+        score -= bumpiness * 1
+
+        # 5. well sums
+        well_sums = 0
+        for x in range(1, len(heights) - 1):
+            if heights[x - 1] > heights[x] and heights[x + 1] > heights[x]:
+                well_sums += min(heights[x - 1], heights[x + 1]) - heights[x]
+        if len(heights) > 1:
+            well_sums += heights[1] - heights[0]
+            well_sums += heights[-2] - heights[-1]
+        score -= well_sums * 1
 
         return score
 
