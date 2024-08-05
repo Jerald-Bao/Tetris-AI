@@ -39,7 +39,7 @@ class Player:
         for piece.x in range(-2, game.cols + 3):
             for piece.y in range(0, game.rows+5):
                 for piece.rotation in range(4):
-                    if not game.valid_space(piece):
+                    if not game.valid_space(piece, game.grid):
                         validity[piece.x, piece.y, piece.rotation] = False
 
         hasChange = True

@@ -6,11 +6,12 @@ from Player import Player
 
 
 class RandomPlayer(Player):
-    def __init__(self, name,game):
-        super().__init__(name,game)
+
+    def __init__(self, name, game):
+        super().__init__(name, game)
 
     def generate_command(self):
-        ran = random.randint(0,10)
+        ran = random.randint(0, 10)
         if ran == 0:
             self.command_queue.append("left")
         elif ran == 1:
