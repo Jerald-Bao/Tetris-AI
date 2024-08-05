@@ -109,9 +109,6 @@ shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 16
 
 
 class Piece(object):
-    rows = 20  # y
-    columns = 10  # x
-
     def __init__(self, column, row, shape):
         self.x = column
         self.y = row

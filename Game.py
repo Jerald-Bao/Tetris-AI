@@ -19,6 +19,8 @@ class Game:
     def __init__(self, seed):
         self.grid = None
         self.randomizer = random.Random(seed)
+        self.cols = 10
+        self.rows = 20
         self.locked_positions = {}
         self.clock = pygame.time.Clock()
         self.create_grid(self.locked_positions)
@@ -43,16 +45,16 @@ class Game:
             level_time = 0
             if self.fall_speed > 0.15:
                 self.fall_speed -= 0.005
+        self.player.update()
 
         # PIECE FALLING CODE
         if self.fall_time / 1000 >= self.fall_speed:
             self.fall_time = 0
             self.current_piece.y += 1
-            if not (self.valid_space(self.current_piece, self.grid)) and self.current_piece.y > 0:
+            if not (self.valid_space(self.current_piece)) and self.current_piece.y > 0:
                 self.current_piece.y -= 1
                 self.change_piece = True
 
-        self.player.update()
 
         shape_pos = self.convert_shape_format(self.current_piece)
 
@@ -86,7 +88,7 @@ class Game:
     def create_grid(self, locked_positions=None):
         if locked_positions is None:
             locked_positions = {}
-        self.grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
+        self.grid = [[(0, 0, 0) for x in range(self.cols)] for x in range(self.rows)]
 
         for i in range(len(self.grid)):
             for j in range(len(self.grid[i])):
@@ -110,8 +112,8 @@ class Game:
 
         return positions
 
-    def valid_space(self, shape: Piece, grid):
-        accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0, 0, 0)] for i in range(20)]
+    def valid_space(self, shape: Piece):
+        accepted_positions = [[(j, i) for j in range(self.cols) if self.grid[i][j] == (0, 0, 0)] for i in range(self.rows)]
         accepted_positions = [j for sub in accepted_positions for j in sub]
         formatted = self.convert_shape_format(shape)
 
@@ -202,29 +204,29 @@ class Game:
                 pygame.draw.rect(surface, self.grid[i][j], (top_left_x + j * 30, top_left_y + i * 30, 30, 30), 0)
 
         # draw grid and border
-        self.draw_grid(surface, 20, 10)
+        self.draw_grid(surface, self.rows, self.cols)
         pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
         # pygame.display.update()
         draw_text(f"score: {self.score}",20,(255,255,255), surface,20,20)
 
     def move_left(self):
         self.current_piece.x -= 1
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.x += 1
 
     def move_right(self):
         self.current_piece.x += 1
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.x -= 1
 
     def rotate_piece(self):
         self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.rotation = self.current_piece.rotation - 1 % len(self.current_piece.shape)
 
     def drop_piece(self):
         self.current_piece.y += 1
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.y -= 1
 
     def quit(self):
