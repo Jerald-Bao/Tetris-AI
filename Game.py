@@ -20,6 +20,8 @@ class Game:
     def __init__(self, seed):
         self.grid = None
         self.randomizer = random.Random(seed)
+        self.cols = 10
+        self.rows = 20
         self.locked_positions = {}
         self.clock = pygame.time.Clock()
         self.create_grid(self.locked_positions)
