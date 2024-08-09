@@ -38,7 +38,7 @@ def main():
 
     clock = pygame.time.Clock()
     while game1.run or game2.run:
-        clock.tick()
+        clock.tick(60)
         if not game1.run:
             game1_surface.fill((0, 0, 0))
             G.draw_text_middle("You Lost", 40, (255, 255, 255), game1_surface)

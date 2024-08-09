@@ -32,7 +32,7 @@ class Game:
         self.player = None
         self.fall_time = 0
         self.level_time = 0
-        self.fall_speed = 1
+        self.fall_speed = 0.27
         self.score = 0
         self.piece_dropped = False
         self.accepted_positions = None

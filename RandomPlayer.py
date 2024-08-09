@@ -17,23 +17,14 @@ class RandomPlayer(AIPlayerBase):
         possible_states = self.get_possible_states(self.game)
         self.choice = random.choice(possible_states)
         self.placing_piece = True
-        self.current_piece = self.game.current_piece
         self.place_current_piece(self.choice)
-        print(self.choice)
 
     def update(self, update_time):
-        if self.choice is not None:
-            self.highlight()
-
+        super().update(update_time)
         if not self.moving_piece and self.placing_piece:
             self.place_current_piece(self.choice)
-
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_g:
-                    print("P")
-
-        super().update(update_time)
+        if self.choice is not None:
+            self.highlight()
 
     def highlight(self):
         if self.choice is not None:
