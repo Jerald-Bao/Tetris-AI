@@ -38,9 +38,9 @@ class MinimaxABPlayer(Player):
                 piece_copy.rotation = rotation
                 piece_copy.x += x
 
-                if game.valid_space(piece_copy, game.grid):
+                if game.valid_space(piece_copy):
                     piece_copy.y += 1
-                    while game.valid_space(piece_copy, game.grid):
+                    while game.valid_space(piece_copy):
                         piece_copy.y += 1
                     piece_copy.y -= 1
 
@@ -100,6 +100,6 @@ class MinimaxABPlayer(Player):
 
             self.command_queue.append("drop")
 
-    def update(self):
+    def update(self, update_time):
         self.generate_command()
-        super().update()
+        super().update(update_time)

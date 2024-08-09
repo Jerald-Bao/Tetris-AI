@@ -16,14 +16,13 @@ top_left_y = s_height - play_height
 
 
 class Game:
-
     def __init__(self, seed):
         self.grid = None
+        self.debug_grid = None
         self.randomizer = random.Random(seed)
         self.cols = 10
         self.rows = 20
         self.locked_positions = {}
-        self.clock = pygame.time.Clock()
         self.create_grid(self.locked_positions)
         self.change_piece = False
         self.run = True
@@ -33,33 +32,39 @@ class Game:
         self.player = None
         self.fall_time = 0
         self.level_time = 0
-        self.fall_speed = 0.27
+        self.fall_speed = 1
         self.score = 0
+        self.piece_dropped = False
+        self.accepted_positions = None
         # self.seed = seed  # save seed
         # random.seed(seed)  # set random seed
 
-    def update(self, win):
+    def update(self, win,update_time):
 
         self.grid = self.create_grid(self.locked_positions)
-        self.fall_time += self.clock.get_rawtime()
-        self.level_time += self.clock.get_rawtime()
-        self.clock.tick()
+        self.debug_grid = self.create_grid()
+        self.fall_time += update_time
+        self.level_time += update_time
 
-        if self.level_time / 1000 > 4:
-            level_time = 0
-            if self.fall_speed > 0.15:
-                self.fall_speed -= 0.005
+        # if self.level_time / 1000 > 4:
+        #     level_time = 0
+        #     if self.fall_speed > 0.15:
+        #         self.fall_speed -= 0.005
+
+        self.update_valid_positions()
+        self.player.update(update_time)
+
+        if self.piece_dropped:
+            self.fall_time = 0
+            self.piece_dropped = False
 
         # PIECE FALLING CODE
         if self.fall_time / 1000 >= self.fall_speed:
             self.fall_time = 0
             self.current_piece.y += 1
-            if not (self.valid_space(self.current_piece,
-                                     self.grid)) and self.current_piece.y > 0:
+            if not (self.valid_space(self.current_piece)) and self.current_piece.y > 0:
                 self.current_piece.y -= 1
                 self.change_piece = True
-
-        self.player.update()
 
         shape_pos = self.convert_shape_format(self.current_piece)
 
@@ -84,6 +89,8 @@ class Game:
             if self.clear_rows(self.grid, self.locked_positions):
                 self.score += 10
 
+        self.update_valid_positions()
+
         self.draw_window(win)
         self.draw_next_shapes(self.next_pieces, win)  # show next 5 pieces
         pygame.display.update()
@@ -95,14 +102,14 @@ class Game:
     def create_grid(self, locked_positions=None):
         if locked_positions is None:
             locked_positions = {}
-        self.grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
+        grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
 
-        for i in range(len(self.grid)):
-            for j in range(len(self.grid[i])):
+        for i in range(len(grid)):
+            for j in range(len(grid[i])):
                 if (j, i) in locked_positions:
                     c = locked_positions[(j, i)]
-                    self.grid[i][j] = c
-        return self.grid
+                    grid[i][j] = c
+        return grid
 
     def convert_shape_format(self, shape: Piece):
         positions = []
@@ -119,15 +126,17 @@ class Game:
 
         return positions
 
-    def valid_space(self, shape: Piece, grid):
-        accepted_positions = [[(j, i) for j in range(10)
-                               if grid[i][j] == (0, 0, 0)] for i in range(20)]
-        accepted_positions = [j for sub in accepted_positions for j in sub]
+    def update_valid_positions(self):
+        self.accepted_positions = [[(j, i) for j in range(10)
+                                    if self.grid[i][j] == (0, 0, 0)] for i in range(20)]
+        self.accepted_positions = [j for sub in self.accepted_positions for j in sub]
+
+    def valid_space(self, shape: Piece):
         formatted = self.convert_shape_format(shape)
 
         for pos in formatted:
-            if pos not in accepted_positions:
-                if pos[1] > -1:
+            if pos not in self.accepted_positions:
+                if pos[1] > -1 or pos[0] < 0 or pos[0] >= self.cols:
                     return False
 
         return True
@@ -224,6 +233,10 @@ class Game:
                 pygame.draw.rect(
                     surface, self.grid[i][j],
                     (top_left_x + j * 30, top_left_y + i * 30, 30, 30), 0)
+                if not self.debug_grid[i][j] == (0,0,0):
+                    pygame.draw.rect(
+                        surface, self.debug_grid[i][j],
+                        (top_left_x + j * 30, top_left_y + i * 30, 30, 30), 0)
 
         # draw grid and border
         self.draw_grid(surface, 20, 10)
@@ -234,25 +247,27 @@ class Game:
 
     def move_left(self):
         self.current_piece.x -= 1
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.x += 1
 
     def move_right(self):
         self.current_piece.x += 1
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.x -= 1
 
     def rotate_piece(self):
         self.current_piece.rotation = self.current_piece.rotation + 1 % len(
             self.current_piece.shape)
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.rotation = self.current_piece.rotation - 1 % len(
                 self.current_piece.shape)
 
     def drop_piece(self):
         self.current_piece.y += 1
-        if not self.valid_space(self.current_piece, self.grid):
+        if not self.valid_space(self.current_piece):
             self.current_piece.y -= 1
+        else:
+            self.piece_dropped = True
 
     def quit(self):
         self.run = False
