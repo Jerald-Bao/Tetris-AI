@@ -29,10 +29,10 @@ class AIPlayerBase(Player):
                 command = self.path_map[self.current_piece.x, self.current_piece.y, self.current_piece.rotation]
                 if not command == '':
                     self.command_queue.append(command)
-                    print(f"add command {command}")
+                    #print(f"add command {command}")
                 else:
                     self.moving_piece = False
-                    print("recalculate path")
+                    #print("recalculate path")
 
         if not self.moving_piece and self.placing_piece:
             self.place_current_piece(self.choice)

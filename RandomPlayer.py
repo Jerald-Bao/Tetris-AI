@@ -16,7 +16,6 @@ class RandomPlayer(AIPlayerBase):
         possible_states = self.get_possible_states(self.game)
         self.choice = random.choice(possible_states)
         self.placing_piece = True
-        print("generate command")
         self.place_current_piece(self.choice)
 
     def update(self, update_time):
