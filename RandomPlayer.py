@@ -11,18 +11,18 @@ class RandomPlayer(AIPlayerBase):
 
     def __init__(self, name, game):
         super().__init__(name, game)
-        self.choice = None
 
     def generate_command(self):
         possible_states = self.get_possible_states(self.game)
         self.choice = random.choice(possible_states)
         self.placing_piece = True
+        print("generate command")
         self.place_current_piece(self.choice)
 
     def update(self, update_time):
+        # Just in case the event list blocks everything
+        pygame.event.get()
         super().update(update_time)
-        if not self.moving_piece and self.placing_piece:
-            self.place_current_piece(self.choice)
         if self.choice is not None:
             self.highlight()
 

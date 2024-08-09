@@ -12,6 +12,7 @@ class AIPlayerBase(Player):
         self.command_interval = 100
         self.command_time = 0
         self.moving_piece = False
+        self.choice = None
 
     def update(self, update_time):
         if self.placing_piece:
@@ -28,8 +29,13 @@ class AIPlayerBase(Player):
                 command = self.path_map[self.current_piece.x, self.current_piece.y, self.current_piece.rotation]
                 if not command == '':
                     self.command_queue.append(command)
+                    print(f"add command {command}")
                 else:
                     self.moving_piece = False
+                    print("recalculate path")
+
+        if not self.moving_piece and self.placing_piece:
+            self.place_current_piece(self.choice)
 
         super().update(update_time)
 
