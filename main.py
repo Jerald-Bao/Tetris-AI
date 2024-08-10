@@ -27,8 +27,8 @@ def main():
     seed = random.randint(0, 100000)
     game1 = Game(seed)
     game2 = Game(seed)
-    game1.player = HumanPlayer("Dracula", game1)
-    game2.player = MinimaxABPlayer("Random", game2)
+    game1.player = Player("Dracula", game1)
+    game2.player = RandomPlayer("Random", game2)
     rect = pygame.Rect(0, 0, G.s_width, G.s_height)
     game1_surface = pygame.Surface(rect.size)
     game2_surface = pygame.Surface(rect.size)
@@ -36,17 +36,19 @@ def main():
     #game2_surface = pygame.Surface(rect.size)
     #    game2_surface.blit(win, (left_margin * 2 + G.s_width, top_margin), rect)
 
+    clock = pygame.time.Clock()
     while game1.run or game2.run:
+        clock.tick(60)
         if not game1.run:
             game1_surface.fill((0, 0, 0))
             G.draw_text_middle("You Lost", 40, (255, 255, 255), game1_surface)
         else:
-            game1.update(game1_surface)
+            game1.update(game1_surface,clock.get_rawtime())
         if not game2.run:
             game2_surface.fill((0, 0, 0))
             G.draw_text_middle("You Lost", 40, (255, 255, 255), game2_surface)
         else:
-            game2.update(game2_surface)
+            game2.update(game2_surface,clock.get_rawtime())
         win.blit(game1_surface, (left_margin, top_margin))
         win.blit(game2_surface, (left_margin * 2 + G.s_width, top_margin))
         pygame.display.flip()
