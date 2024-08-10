@@ -167,3 +167,4 @@ class AIPlayerBase(Player):
         self.placing_piece = True
         self.moving_piece = True
         self.current_piece = self.game.current_piece
+        self.command_time = self.command_interval + 1
