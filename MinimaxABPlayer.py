@@ -1,7 +1,7 @@
-from Player import Player
+from AIPlayerBase import AIPlayerBase
 
 
-class MinimaxABPlayer(Player):
+class MinimaxABPlayer(AIPlayerBase):
 
     def __init__(self, name, game, depth=3):
         super().__init__(name, game)
@@ -53,33 +53,6 @@ class MinimaxABPlayer(Player):
 
         return score
 
-    def get_possible_states(self, game):
-        possible_states = []
-        original_piece = game.current_piece
-
-        for rotation in range(len(original_piece.shape)
-                              ):  # every shape has different ratation states
-            for x in range(
-                    -2, 3
-            ):  # limit the horizontal movement range, could be changed
-                piece_copy = original_piece.copy()
-                piece_copy.rotation = rotation
-                piece_copy.x += x
-
-                if game.valid_space(piece_copy):
-                    piece_copy.y += 1
-                    while game.valid_space(piece_copy):
-                        piece_copy.y += 1
-                    piece_copy.y -= 1
-
-                    new_game_state = game.copy()
-                    new_game_state.current_piece = piece_copy
-                    new_game_state.lock_piece()
-                    possible_states.append((new_game_state, x, rotation))
-
-        # print(f"Possible states: {len(possible_states)}")
-        return possible_states
-
     def minimax(self, game, depth, alpha, beta, maximizing_player):
         if depth == 0 or game.check_lost(game.locked_positions):
             return self.evaluate_state(game)
@@ -129,5 +102,6 @@ class MinimaxABPlayer(Player):
             self.command_queue.append("drop")
 
     def update(self, update_time):
-        self.generate_command()
+        if not self.placing_piece:
+            self.generate_command()
         super().update(update_time)
