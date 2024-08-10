@@ -7,6 +7,7 @@ from HumanPlayer import HumanPlayer
 from RandomPlayer import RandomPlayer
 from Player import Player
 from MinimaxABPlayer import MinimaxABPlayer
+from MonteCarloPlayer import MonteCarloPlayer
 """
 10 x 20 square grid
 shapes: S, Z, I, O, J, L, T
@@ -27,12 +28,17 @@ def main():
     seed = random.randint(0, 100000)
     game1 = Game(seed)
     game2 = Game(seed)
+<<<<<<< Updated upstream
     game1.player = HumanPlayer("Dracula", game1)
     game2.player = MinimaxABPlayer("Random", game2)
+=======
+    game1.player = Player("Human", game1)
+    game2.player = MonteCarloPlayer("Dracula", game2)
+>>>>>>> Stashed changes
     rect = pygame.Rect(0, 0, G.s_width, G.s_height)
     game1_surface = pygame.Surface(rect.size)
     game2_surface = pygame.Surface(rect.size)
-
+  
     #game2_surface = pygame.Surface(rect.size)
     #    game2_surface.blit(win, (left_margin * 2 + G.s_width, top_margin), rect)
 

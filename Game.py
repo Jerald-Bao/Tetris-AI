@@ -1,5 +1,5 @@
 import random
-
+import copy
 import pygame
 import Piece
 
@@ -36,7 +36,34 @@ class Game:
         # self.seed = seed  # save seed
         # random.seed(seed)  # set random seed
 
+<<<<<<< Updated upstream
     def update(self, win):
+=======
+    def copy(self):
+        # Create a new instance of the game with the same seed
+        new_game = Game(seed=self.randomizer.seed())
+
+        # Deep copy the game state attributes
+        new_game.grid = copy.deepcopy(self.grid)
+        new_game.debug_grid = copy.deepcopy(self.debug_grid)
+        new_game.locked_positions = copy.deepcopy(self.locked_positions)
+        new_game.change_piece = self.change_piece
+        new_game.run = self.run
+        new_game.current_piece = copy.deepcopy(self.current_piece)
+        new_game.next_pieces = copy.deepcopy(self.next_pieces)
+        new_game.player = self.player  # Assume player doesn't need deep copy, or copy as needed
+        new_game.fall_time = self.fall_time
+        new_game.level_time = self.level_time
+        new_game.fall_speed = self.fall_speed
+        new_game.score = self.score
+        new_game.piece_dropped = self.piece_dropped
+        new_game.accepted_positions = copy.deepcopy(self.accepted_positions)
+        new_game.history = copy.deepcopy(self.history)
+
+        return new_game
+
+    def update(self, win, update_time):
+>>>>>>> Stashed changes
 
         self.grid = self.create_grid(self.locked_positions)
         self.fall_time += self.clock.get_rawtime()
