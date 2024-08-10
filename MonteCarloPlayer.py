@@ -77,30 +77,54 @@ class MonteCarloPlayer(Player):
 from AIPlayerBase import AIPlayerBase
 from Piece import Piece
 import random
+from collections import defaultdict
 
 class MonteCarloPlayer(AIPlayerBase):
-
+    
     def __init__(self, name, game, simulations=100):
         super().__init__(name, game)
         self.simulations = simulations  # Number of simulations per move
+        self.tree = defaultdict(lambda: {"score": 0, "visits": 0, "children": {}})
 
     def generate_command(self):
-        possible_states = self.get_possible_states(self.game)
-        best_score = -float('inf')
-        best_move = None
-
-        for state in possible_states:
-            total_score = 0
-            for _ in range(self.simulations):
-                score = self.simulate(state)
-                total_score += score
-
-            average_score = total_score / self.simulations
-            if average_score > best_score:
-                best_score = average_score
-                best_move = state
-
+        root_state = self.get_game_state_key(self.game)
+        best_move = self.mcts(root_state)
         self.choice = best_move
+
+    def mcts(self, root_state):
+        for _ in range(self.simulations):
+            node = self.tree[root_state]
+            # Selection
+            state = self.select(node)
+            # Expansion
+            if state not in self.tree:
+                self.expand(state)
+            # Simulation
+            score = self.simulate(state)
+            # Backpropagation
+            self.backpropagate(state, score)
+        
+        # Choose the best move based on the average score
+        best_state = max(self.tree[root_state]["children"], key=lambda s: self.tree[s]["score"] / self.tree[s]["visits"])
+        return best_state
+
+    def select(self, node):
+        # Selection using UCT (Upper Confidence Bound for Trees)
+        state = max(node["children"], key=lambda s: self.uct_value(s))
+        return state
+
+    def uct_value(self, state):
+        """Compute the Upper Confidence Bound for Trees (UCT) value of a state."""
+        if self.tree[state]["visits"] == 0:
+            return float('inf')  # Favor unexplored states
+        return (self.tree[state]["score"] / self.tree[state]["visits"]) + \
+               2 * (2 * (self.tree[state]["visits"] ** 0.5) / (1 + self.tree[state]["visits"]))
+
+    def expand(self, state):
+        possible_states = self.get_possible_states_from_state(state)
+        for child_state in possible_states:
+            if child_state not in self.tree:
+                self.tree[state]["children"][child_state] = {"score": 0, "visits": 0, "children": {}}
 
     def simulate(self, state):
         # Create a copy of the game to simulate
@@ -128,13 +152,40 @@ class MonteCarloPlayer(AIPlayerBase):
 
         return score
 
-    def get_possible_states(self, game):
+    def backpropagate(self, state, score):
+        while state:
+            self.tree[state]["visits"] += 1
+            self.tree[state]["score"] += score
+            state = self.get_parent_state(state)
+    
+    def get_game_state_key(self, game):
+        """Generate a unique key representing the game state."""
+        return (tuple(game.board), game.current_piece.x, game.current_piece.y, game.current_piece.rotation)
+    
+    def get_possible_states_from_state(self, state):
+        """Generate possible states from a given state."""
         possible_states = []
-        for rotation in range(len(game.current_piece.shape)):
-            for x in range(-2, game.cols - 2):
-                piece_copy = Piece(x, 0, game.current_piece.shape)
+        current_piece = self.create_piece_from_state(state)
+        for rotation in range(len(current_piece.shape)):
+            for x in range(-2, self.game.cols - 2):
+                piece_copy = Piece(x, 0, current_piece.shape)
                 piece_copy.rotation = rotation
-                if game.valid_space(piece_copy):
+                if self.game.valid_space(piece_copy):
                     possible_states.append((x, piece_copy.y, rotation))
         return possible_states
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+
+    def create_piece_from_state(self, state):
+        """Create a Piece object from a given state."""
+        x, y, rotation = state
+        piece = Piece(x, y, self.game.current_piece.shape)
+        piece.rotation = rotation
+        return piece
+
+    def get_parent_state(self, state):
+        """Determine the parent state for backpropagation."""
+        # Implement based on your tree structure and state representation
+        return None
 >>>>>>> Stashed changes
