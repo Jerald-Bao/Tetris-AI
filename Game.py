@@ -16,6 +16,7 @@ top_left_y = s_height - play_height
 
 
 class Game:
+
     def __init__(self, seed):
         self.grid = None
         self.debug_grid = None
@@ -38,8 +39,9 @@ class Game:
         self.accepted_positions = None
         # self.seed = seed  # save seed
         # random.seed(seed)  # set random seed
+        self.history = []  # keep track of the history
 
-    def update(self, win,update_time):
+    def update(self, win, update_time):
 
         self.grid = self.create_grid(self.locked_positions)
         self.debug_grid = self.create_grid()
@@ -62,7 +64,8 @@ class Game:
         if self.fall_time / 1000 >= self.fall_speed:
             self.fall_time = 0
             self.current_piece.y += 1
-            if not (self.valid_space(self.current_piece)) and self.current_piece.y > 0:
+            if not (self.valid_space(
+                    self.current_piece)) and self.current_piece.y > 0:
                 self.current_piece.y -= 1
                 self.change_piece = True
 
@@ -124,15 +127,22 @@ class Game:
         for i, pos in enumerate(positions):
             positions[i] = (pos[0] - 2, pos[1] - 4)
 
+        # print(f"Converted shape positions: {positions}")  # debug print
+
         return positions
 
     def update_valid_positions(self):
         self.accepted_positions = [[(j, i) for j in range(10)
-                                    if self.grid[i][j] == (0, 0, 0)] for i in range(20)]
-        self.accepted_positions = [j for sub in self.accepted_positions for j in sub]
+                                    if self.grid[i][j] == (0, 0, 0)]
+                                   for i in range(20)]
+        self.accepted_positions = [
+            j for sub in self.accepted_positions for j in sub
+        ]
 
     def valid_space(self, shape: Piece):
         formatted = self.convert_shape_format(shape)
+        # print(f"Formatted positions: {formatted}")
+        # print(f"Accepted positions: {self.accepted_positions}")
 
         for pos in formatted:
             if pos not in self.accepted_positions:
@@ -233,7 +243,8 @@ class Game:
                 pygame.draw.rect(
                     surface, self.grid[i][j],
                     (top_left_x + j * 30, top_left_y + i * 30, 30, 30), 0)
-                if not self.debug_grid[i][j] == (0,0,0):
+
+                if not self.debug_grid[i][j] == (0, 0, 0):
                     pygame.draw.rect(
                         surface, self.debug_grid[i][j],
                         (top_left_x + j * 30, top_left_y + i * 30, 30, 30), 0)
@@ -268,6 +279,38 @@ class Game:
             self.current_piece.y -= 1
         else:
             self.piece_dropped = True
+
+    def push(self, x, y, rotation):
+        self.history.append({
+            'locked_positions':
+            self.locked_positions.copy(),
+            'current_piece': (self.current_piece.x, self.current_piece.y,
+                              self.current_piece.rotation)
+        })
+        shape_pos = self.convert_shape_format(self.current_piece)
+
+        # Add the piece to the grid
+        for i in range(len(shape_pos)):
+            px, py = shape_pos[i]
+            if py > -1:
+                self.locked_positions[(px, py)] = self.current_piece.color
+
+        self.grid = self.create_grid(self.locked_positions)
+
+        return self
+
+    def pop(self):
+        if not self.history:
+            return self  # no action to undo
+
+        # restore the previous state
+        last_state = self.history.pop()
+        self.locked_positions = last_state['locked_positions']
+        self.current_piece.x, self.current_piece.y, self.current_piece.rotation = last_state[
+            'current_piece']
+        self.grid = self.create_grid(self.locked_positions)
+
+        return self
 
     def quit(self):
         self.run = False

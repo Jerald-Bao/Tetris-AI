@@ -59,8 +59,10 @@ class MinimaxABPlayer(AIPlayerBase):
 
         if maximizing_player:
             max_eval = float('-inf')
-            for state, x, rotation in self.get_possible_states(game):
-                eval = self.minimax(state, depth - 1, alpha, beta, False)
+            for x, y, rotation in self.get_possible_states(game):
+                game.push(x, y, rotation)
+                eval = self.minimax(game, depth - 1, alpha, beta, False)
+                game.pop()
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
                 if beta <= alpha:
@@ -68,8 +70,10 @@ class MinimaxABPlayer(AIPlayerBase):
             return max_eval
         else:
             min_eval = float('inf')
-            for state, x, rotation in self.get_possible_states(game):
-                eval = self.minimax(state, depth - 1, alpha, beta, True)
+            for x, y, rotation in self.get_possible_states(game):
+                game.push(x, y, rotation)
+                eval = self.minimax(game, depth - 1, alpha, beta, True)
+                game.pop()
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
                 if beta <= alpha:
@@ -80,9 +84,14 @@ class MinimaxABPlayer(AIPlayerBase):
         best_score = float('-inf')
         best_move = None
 
-        for state, x, rotation in self.get_possible_states(self.game):
-            score = self.minimax(state, self.depth, float('-inf'),
+        possible_states = self.get_possible_states(self.game)
+
+        for (x, y, rotation) in possible_states:
+            self.game.push(x, y, rotation)
+            score = self.minimax(self.game, self.depth, float('-inf'),
                                  float('inf'), False)
+            self.game.pop()
+
             if score > best_score:
                 best_score = score
                 best_move = (x, rotation)
@@ -95,9 +104,9 @@ class MinimaxABPlayer(AIPlayerBase):
                 self.command_queue.extend(["rotate"] * rotation)
 
             if x < 0:
-                self.command_queue.append("left")
+                self.command_queue.extend(["left"] * abs(x))
             elif x > 0:
-                self.command_queue.append("right")
+                self.command_queue.extend(["right"] * x)
 
             self.command_queue.append("drop")
 
