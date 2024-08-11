@@ -29,7 +29,6 @@ class MonteCarloPlayer(AIPlayerBase):
         Args:
             update_time (int): The time elapsed since the last update, used for timing control.
         """
-        pygame.event.get()
         super().update(update_time)
 
     def generate_command(self):
