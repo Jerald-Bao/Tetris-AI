@@ -27,8 +27,8 @@ def main(difficulty):
     seed = random.randint(0, 100000)
     game1 = Game(seed)
     game2 = Game(seed)
-    game1.player = HumanPlayer("Dracula", game1)
-    game2.player = RandomPlayer("Random", game2)
+    game1.player = RandomPlayer("Dracula", game1)
+    game2.player = MinimaxABPlayer("Random", game2)
     if difficulty == 0:
         game2.player.command_interval = 350
     elif difficulty == 1:

@@ -25,10 +25,4 @@ class RandomPlayer(AIPlayerBase):
         if self.choice is not None:
             self.highlight()
 
-    def highlight(self):
-        if self.choice is not None:
-            piece = Piece(self.choice[0], self.choice[1], self.game.current_piece.shape)
-            piece.rotation = self.choice[2]
-            for position in self.game.convert_shape_format(piece):
-                if 0 <= position[1] < 20 and 0 <= position[0] < 10:
-                    self.game.debug_grid[position[1]][position[0]] = (200, 10, 200)
+

@@ -1,4 +1,5 @@
 import numpy as np
+import pygame
 
 from Piece import Piece
 from Player import Player
@@ -16,6 +17,7 @@ class AIPlayerBase(Player):
         self.choice = None
 
     def update(self, update_time):
+        pygame.event.get()
         if self.placing_piece:
             if self.current_piece != self.game.current_piece:
                 self.placing_piece = False
@@ -50,8 +52,9 @@ class AIPlayerBase(Player):
         piece = Piece(game.current_piece.x, game.current_piece.y,
                       game.current_piece.shape)
         piece.rotation = game.current_piece.rotation
+        orientation = len(piece.shape[1])
 
-        accessible = np.zeros((game.cols + 5, game.rows + 5, len(piece.shape)),
+        accessible = np.zeros((game.cols + 5, game.rows + 5, orientation),
                               dtype=bool)
         # set the spawning point of the 'fire' to the piece's current location
         accessible[piece.x, piece.y, piece.rotation] = True
@@ -62,7 +65,7 @@ class AIPlayerBase(Player):
             hasChange = False
             for i in range(-2, game.cols + 3):
                 for j in range(0, game.rows + 5):
-                    for rotation in range(len(piece.shape)):
+                    for rotation in range(orientation):
                         if not accessible[i, j,
                                           rotation] and validity[i, j,
                                                                  rotation]:
@@ -79,7 +82,7 @@ class AIPlayerBase(Player):
                                 accessible[i, j, rotation] = True
                                 hasChange = True
                             elif accessible[i, j, (rotation + 1) %
-                                            len(piece.shape)] or accessible[
+                                            orientation] or accessible[
                                                 i, j, rotation - 1]:
                                 accessible[i, j, rotation] = True
                                 hasChange = True
@@ -88,23 +91,24 @@ class AIPlayerBase(Player):
         possible_states = []
         for i in range(-2, game.cols + 3):
             for j in range(game.rows + 5):
-                for rotation in range(len(piece.shape)):
+                for rotation in range(orientation):
                     if accessible[i, j, rotation] and (
                             j == game.rows + 4
                             or not validity[i, j + 1, rotation]):
                         possible_states.append((i, j, rotation))
 
-        print(f"Possible states: {possible_states}")
+        # print(f"Possible states: {possible_states}")
         # print(f"Possible states: {len(possible_states)}")
         return possible_states
 
     def get_position_validity(self, piece):
+        orientation = len(piece.shape[1])
         validity = np.zeros(
-            (self.game.cols + 5, self.game.rows + 5, len(piece.shape)),
+            (self.game.cols + 5, self.game.rows + 5, orientation),
             dtype=bool)
         for piece.x in range(-2, self.game.cols + 3):
             for piece.y in range(0, self.game.rows + 5):
-                for piece.rotation in range(len(piece.shape)):
+                for piece.rotation in range(orientation):
                     if self.game.valid_space(piece):
                         validity[piece.x, piece.y, piece.rotation] = True
         return validity
@@ -113,10 +117,11 @@ class AIPlayerBase(Player):
         piece = Piece(self.game.current_piece.x, self.game.current_piece.y,
                       self.game.current_piece.shape)
         piece.rotation = self.game.current_piece.rotation
+        orientation = len(piece.shape[1])
         dtype = np.dtype([('direction', 'S10'), ('distance', 'i4')])
         default_value = np.array([('unknown', 999)], dtype=dtype)
         directions = np.full(
-            (self.game.cols + 5, self.game.rows + 5, len(piece.shape)),
+            (self.game.cols + 5, self.game.rows + 5, orientation),
             default_value,
             dtype=dtype)
         # set the spawning point of the 'fire' to the piece's current location
@@ -131,7 +136,7 @@ class AIPlayerBase(Player):
             hasChange = False
             for i in range(-2, self.game.cols + 3):
                 for j in range(0, self.game.rows + 5):
-                    for rotation in range(len(piece.shape)):
+                    for rotation in range(orientation):
                         if validity[i, j, rotation]:
                             # Spread fire to adjacent grass cells
                             if i > -2 and directions[i - 1, j, rotation][
@@ -153,12 +158,12 @@ class AIPlayerBase(Player):
                                 directions[i, j,
                                            rotation]["direction"] = "right"
                                 hasChange = True
-                            elif directions[i, j, (rotation - 1) % len(piece.shape)]["distance"] + 1 < \
+                            elif directions[i, j, (rotation - 1) % orientation]["distance"] + 1 < \
                                     directions[i, j, rotation]["distance"]:
                                 directions[
                                     i, j, rotation]["distance"] = directions[
                                         i, j, (rotation - 1) %
-                                        len(piece.shape)]["distance"] + 1
+                                        orientation]["distance"] + 1
                                 directions[i, j,
                                            rotation]["direction"] = "clockwise"
                                 hasChange = True
@@ -177,7 +182,7 @@ class AIPlayerBase(Player):
         j = position[1]
         rotation = position[2]
         self.path_map = np.zeros(
-            (self.game.cols + 5, self.game.rows + 5, len(piece.shape)),
+            (self.game.cols + 5, self.game.rows + 5, orientation),
             dtype='U10')
         distance = directions[i, j, rotation]["distance"]
         last_distance = distance
@@ -196,7 +201,7 @@ class AIPlayerBase(Player):
                 distance -= 1
                 self.path_map[i, j, rotation] = 'drop'
             elif directions[i, j, rotation]["direction"] == b"clockwise":
-                rotation = (rotation + 3) % len(piece.shape)
+                rotation = (rotation + 3) % orientation
                 distance -= 1
                 self.path_map[i, j, rotation] = 'rotate'
             if last_distance == distance:
@@ -206,3 +211,11 @@ class AIPlayerBase(Player):
         self.moving_piece = True
         self.current_piece = self.game.current_piece
         self.command_time = self.command_interval + 1
+
+    def highlight(self):
+        if self.choice is not None:
+            piece = Piece(self.choice[0], self.choice[1], self.game.current_piece.shape)
+            piece.rotation = self.choice[2]
+            for position in self.game.convert_shape_format(piece):
+                if 0 <= position[1] < 20 and 0 <= position[0] < 10:
+                    self.game.debug_grid[position[1]][position[0]] = (200, 10, 200)
