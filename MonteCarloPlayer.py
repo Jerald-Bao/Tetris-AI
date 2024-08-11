@@ -1,21 +1,31 @@
+import pygame.event
+
+import Game
 from AIPlayerBase import AIPlayerBase
 from Piece import Piece
 import random
 from collections import defaultdict
 
+
 class MonteCarloPlayer(AIPlayerBase):
-    
+
     def __init__(self, name, game, simulations=100):
         super().__init__(name, game)
         self.simulations = simulations  # Number of simulations per move
         self.tree = defaultdict(lambda: {"score": 0, "visits": 0, "children": {}})
 
+    def update(self, update_time):
+        pygame.event.get()
+        super().update(update_time)
+
     def generate_command(self):
         root_state = self.get_game_state_key(self.game)
         best_move = self.mcts(root_state)
+        self.placing_piece = True
         self.choice = best_move
 
     def mcts(self, root_state):
+        self.expand(root_state)
         for _ in range(self.simulations):
             node = self.tree[root_state]
             # Selection
@@ -24,13 +34,21 @@ class MonteCarloPlayer(AIPlayerBase):
             if state not in self.tree:
                 self.expand(state)
             # Simulation
-            score = self.simulate(state)
+            score = self.simulate(root_state[0], state)
             # Backpropagation
             self.backpropagate(state, score)
-        
+
         # Choose the best move based on the average score
-        best_state = max(self.tree[root_state]["children"], key=lambda s: self.tree[s]["score"] / self.tree[s]["visits"])
-        return best_state
+        max_score = max(
+            (self.tree[s]["score"] / self.tree[s]["visits"]) if self.tree[s]["visits"] > 0 else 0
+            for s in self.tree[root_state]["children"]
+        )
+        best_states = [
+        s for s in self.tree[root_state]["children"]
+        if ((self.tree[s]["score"] / self.tree[s]["visits"])
+            if self.tree[s]["visits"] > 0 else 0) == max_score
+        ]
+        return random.choice(best_states)
 
     def select(self, node):
         # Selection using UCT (Upper Confidence Bound for Trees)
@@ -42,7 +60,7 @@ class MonteCarloPlayer(AIPlayerBase):
         if self.tree[state]["visits"] == 0:
             return float('inf')  # Favor unexplored states
         return (self.tree[state]["score"] / self.tree[state]["visits"]) + \
-               2 * (2 * (self.tree[state]["visits"] ** 0.5) / (1 + self.tree[state]["visits"]))
+            2 * (2 * (self.tree[state]["visits"] ** 0.5) / (1 + self.tree[state]["visits"]))
 
     def expand(self, state):
         possible_states = self.get_possible_states_from_state(state)
@@ -50,19 +68,19 @@ class MonteCarloPlayer(AIPlayerBase):
             if child_state not in self.tree:
                 self.tree[state]["children"][child_state] = {"score": 0, "visits": 0, "children": {}}
 
-    def simulate(self, state):
+    def simulate(self, game: Game.Game, state):
         # Create a copy of the game to simulate
-        simulated_game = self.game.copy()
+        simulated_game = game.copy()
         simulated_piece = Piece(state[0], state[1], self.game.current_piece.shape)
         simulated_piece.rotation = state[2]
         simulated_game.current_piece = simulated_piece
-        
+
         # Place the piece
         while simulated_game.valid_space(simulated_piece):
             simulated_piece.y += 1
         simulated_piece.y -= 1  # Move back to the last valid position
         simulated_game.push(simulated_piece.x, simulated_piece.y, simulated_piece.rotation)
-        
+
         # Run random rollouts
         score = 0
         while simulated_game.run:
@@ -70,8 +88,10 @@ class MonteCarloPlayer(AIPlayerBase):
             if not possible_moves:
                 break
             x, y, rotation = random.choice(possible_moves)
-            simulated_game.push(x, y, rotation)
+            if simulated_game.push(x, y, rotation):
+                break
             score += simulated_game.score
+        while not simulated_game.history:
             simulated_game.pop()
 
         return score
@@ -81,29 +101,29 @@ class MonteCarloPlayer(AIPlayerBase):
             self.tree[state]["visits"] += 1
             self.tree[state]["score"] += score
             state = self.get_parent_state(state)
-    
+
     def get_game_state_key(self, game):
         """Generate a unique key representing the game state."""
-        return (tuple(game.board), game.current_piece.x, game.current_piece.y, game.current_piece.rotation)
-    
+        return game.copy(), game.current_piece.x, game.current_piece.y, game.current_piece.rotation
+
     def get_possible_states_from_state(self, state):
         """Generate possible states from a given state."""
         possible_states = []
-        current_piece = self.create_piece_from_state(state)
-        for rotation in range(len(current_piece.shape)):
-            for x in range(-2, self.game.cols - 2):
-                piece_copy = Piece(x, 0, current_piece.shape)
-                piece_copy.rotation = rotation
-                if self.game.valid_space(piece_copy):
-                    possible_states.append((x, piece_copy.y, rotation))
-        return possible_states
+        game, current_piece = self.create_piece_from_state(state)
+        return self.get_possible_states(game)
+        # for rotation in range(len(current_piece.shape[1])):
+        #     for x in range(-2, self.game.cols - 2):
+        #         piece_copy = Piece(x, 0, current_piece.shape,rotation)
+        #         if self.game.valid_space(piece_copy):
+        #             possible_states.append((x, piece_copy.y, rotation))
+        # return possible_states
 
     def create_piece_from_state(self, state):
         """Create a Piece object from a given state."""
-        x, y, rotation = state
+        game, x, y, rotation = state
         piece = Piece(x, y, self.game.current_piece.shape)
         piece.rotation = rotation
-        return piece
+        return game, piece
 
     def get_parent_state(self, state):
         """Determine the parent state for backpropagation."""
