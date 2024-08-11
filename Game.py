@@ -138,7 +138,9 @@ class Game:
         # print(f"Accepted positions: {self.accepted_positions}")
 
         for pos in formatted:
-            if pos[0] < 0 or pos[0] >= self.cols or pos[1] >= self.rows or not self.accepted_positions[pos[0],pos[1]]:
+            if pos[0] < 0 or pos[0] >= self.cols or pos[1] >= self.rows:
+                return False
+            elif pos[1] > 0 and not self.accepted_positions[pos[0],pos[1]]:
                 return False
 
         return True
@@ -259,11 +261,11 @@ class Game:
             self.current_piece.x -= 1
 
     def rotate_piece(self):
-        self.current_piece.rotation = self.current_piece.rotation + 1 % len(
-            self.current_piece.shape)
+        self.current_piece.rotation = (self.current_piece.rotation + 1) % len(
+            self.current_piece.shape[1])
         if not self.valid_space(self.current_piece):
             self.current_piece.rotation = self.current_piece.rotation - 1 % len(
-                self.current_piece.shape)
+                self.current_piece.shape[1])
 
     def drop_piece(self):
         self.current_piece.y += 1

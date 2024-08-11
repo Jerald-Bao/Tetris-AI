@@ -1,3 +1,4 @@
+import Game
 from AIPlayerBase import AIPlayerBase
 
 
@@ -7,7 +8,7 @@ class MinimaxABPlayer(AIPlayerBase):
         super().__init__(name, game)
         self.depth = depth
 
-    def evaluate_state(self, game):
+    def evaluate_state(self, game: Game.Game):
         grid = game.grid
         score = 0
 
@@ -15,21 +16,21 @@ class MinimaxABPlayer(AIPlayerBase):
         score += game.score * 10
 
         # 2. aggregate height
-        heights = [0] * len(grid[0])
-        for x in range(len(grid[0])):
-            for y in range(len(grid)):
-                if grid[y][x] != (0, 0, 0):
-                    heights[x] = len(grid) - y
+        heights = [0] * game.cols
+        for x in range(game.cols):
+            for y in range(game.rows):
+                if not game.accepted_positions[x][y]:
+                    heights[x] = game.rows - y
                     break
         aggregate_height = sum(heights)
         score -= aggregate_height * 1
 
         # 3. number of holes
         holes = 0
-        for x in range(len(grid[0])):
+        for x in range(game.cols):
             block_found = False
-            for y in range(len(grid)):
-                if grid[y][x] != (0, 0, 0):
+            for y in range(game.rows):
+                if not game.accepted_positions[x][y]:
                     block_found = True
                 elif block_found:
                     holes += 1
@@ -98,6 +99,7 @@ class MinimaxABPlayer(AIPlayerBase):
 
         if best_move:
             self.choice = best_move
+            print(best_score)
             self.place_current_piece(best_move)
             self.placing_piece = True
             
