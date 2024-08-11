@@ -1,6 +1,7 @@
 import numpy as np
 import pygame
 
+from Game import Game
 from Piece import Piece
 from Player import Player
 
@@ -16,6 +17,47 @@ class AIPlayerBase(Player):
         self.moving_piece = False
         self.choice = None
 
+    def evaluate_state(self, game: Game):
+        score = 0
+
+        # 1. number of cleared rows
+        score += game.score * 6
+
+        # 2. aggregate height
+        heights = [0] * game.cols
+        for x in range(game.cols):
+            for y in range(game.rows):
+                if not game.accepted_positions[x][y]:
+                    heights[x] = game.rows - y
+                    break
+        aggregate_height = sum(heights)
+        score -= aggregate_height * 1
+
+        # 3. number of holes
+        holes = 0
+        for x in range(game.cols):
+            for y in range(1,game.rows):
+                if game.accepted_positions[x][y] and not game.accepted_positions[x][y-1]:
+                    holes += 1
+        score -= holes * 25
+
+        # 4. bumpiness
+        bumpiness = 0
+        for i in range(len(heights) - 1):
+            bumpiness += abs(heights[i] - heights[i + 1])
+        score -= bumpiness * 2
+
+        # 5. well sums
+        well_sums = 0
+        for x in range(1, len(heights) - 1):
+            if heights[x - 1] > heights[x] and heights[x + 1] > heights[x]:
+                well_sums += min(heights[x - 1], heights[x + 1]) - heights[x]
+        if len(heights) > 1:
+            well_sums += heights[1] - heights[0]
+            well_sums += heights[-2] - heights[-1]
+        score -= well_sums * 1
+
+        return score
     def update(self, update_time):
         if self.placing_piece:
             if self.current_piece != self.game.current_piece:

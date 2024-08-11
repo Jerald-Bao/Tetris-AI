@@ -19,22 +19,23 @@ class MonteCarloPlayer(AIPlayerBase):
         super().update(update_time)
 
     def generate_command(self):
+        self.tree = defaultdict(lambda: {"score": 0, "visits": 0, "children": {}})
         root_state = self.get_game_state_key(self.game)
         best_move = self.mcts(root_state)
         self.placing_piece = True
         self.choice = best_move
 
     def mcts(self, root_state):
-        self.expand(root_state)
+        self.expand(self.game, root_state)
         for _ in range(self.simulations):
             node = self.tree[root_state]
             # Selection
             state = self.select(node)
             # Expansion
             if state not in self.tree:
-                self.expand(state)
+                self.expand(self.game, state)
             # Simulation
-            score = self.simulate(root_state[0], state)
+            score = self.simulate(self.game, state)
             # Backpropagation
             self.backpropagate(state, score)
 
@@ -62,8 +63,8 @@ class MonteCarloPlayer(AIPlayerBase):
         return (self.tree[state]["score"] / self.tree[state]["visits"]) + \
             2 * (2 * (self.tree[state]["visits"] ** 0.5) / (1 + self.tree[state]["visits"]))
 
-    def expand(self, state):
-        possible_states = self.get_possible_states_from_state(state)
+    def expand(self, game, state):
+        possible_states = self.get_possible_states_from_state(game, state)
         for child_state in possible_states:
             if child_state not in self.tree:
                 self.tree[state]["children"][child_state] = {"score": 0, "visits": 0, "children": {}}
@@ -83,14 +84,17 @@ class MonteCarloPlayer(AIPlayerBase):
 
         # Run random rollouts
         score = 0
-        while simulated_game.run:
+        simulation_depth = 20
+        for depth in range(simulation_depth):
             possible_moves = self.get_possible_states(simulated_game)
             if not possible_moves:
+                score -= 20000
                 break
             x, y, rotation = random.choice(possible_moves)
             if simulated_game.push(x, y, rotation):
+                score -= 20000
                 break
-            score += simulated_game.score
+            score += self.evaluate_state(simulated_game) + 4
         while not simulated_game.history:
             simulated_game.pop()
 
@@ -104,12 +108,11 @@ class MonteCarloPlayer(AIPlayerBase):
 
     def get_game_state_key(self, game):
         """Generate a unique key representing the game state."""
-        return game.copy(), game.current_piece.x, game.current_piece.y, game.current_piece.rotation
+        return game.current_piece.x, game.current_piece.y, game.current_piece.rotation
 
-    def get_possible_states_from_state(self, state):
+    def get_possible_states_from_state(self,game, state):
         """Generate possible states from a given state."""
-        possible_states = []
-        game, current_piece = self.create_piece_from_state(state)
+        # current_piece = self.create_piece_from_state(game, state)
         return self.get_possible_states(game)
         # for rotation in range(len(current_piece.shape[1])):
         #     for x in range(-2, self.game.cols - 2):
@@ -118,9 +121,9 @@ class MonteCarloPlayer(AIPlayerBase):
         #             possible_states.append((x, piece_copy.y, rotation))
         # return possible_states
 
-    def create_piece_from_state(self, state):
+    def create_piece_from_state(self,game, state):
         """Create a Piece object from a given state."""
-        game, x, y, rotation = state
+        x, y, rotation = state
         piece = Piece(x, y, self.game.current_piece.shape)
         piece.rotation = rotation
         return game, piece
