@@ -23,14 +23,16 @@ class HumanPlayer(Player):
                     self.command_queue.append("right")
                 elif event.key == pygame.K_UP:
                     self.command_queue.append("rotate")
-                elif event.key == pygame.K_DOWN:
-                    self.command_queue.append("drop")
                 elif event.key == pygame.K_f:
                     possible_states = self.get_possible_states(self.game)
                     pick = random.choice(possible_states)
                     self.game.current_piece.x = pick[0]
                     self.game.current_piece.y = pick[1]
                     self.game.current_piece.rotation = pick[2]
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_DOWN]:
+            self.command_queue.append("drop")
 
     def update(self, update_time):
         self.handle_input()
