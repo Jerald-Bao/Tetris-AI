@@ -88,7 +88,7 @@ class MinimaxABPlayer(AIPlayerBase):
         mock_game = self.game.copy()
         for state in possible_states:
             mock_game.push(state[0],state[1],state[2])
-            score = self.minimax(self.game, self.depth, float('-inf'),
+            score = self.minimax(mock_game, self.depth, float('-inf'),
                                  float('inf'), False)
             mock_game.pop()
 
