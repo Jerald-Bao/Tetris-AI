@@ -7,8 +7,29 @@ from Player import Player
 
 
 class AIPlayerBase(Player):
+    """
+    Base class for AI players in Tetris.
+
+    Inherits from:
+        Player: Base player class.
+
+    Attributes:
+        placing_piece (bool): Indicates whether the AI is currently placing a piece.
+        current_piece (Piece): The piece currently being handled by the AI.
+        command_interval (int): Interval for command updates (in milliseconds).
+        command_time (int): Time elapsed since the last command was issued.
+        moving_piece (bool): Indicates whether the AI is moving the piece.
+        choice (tuple): The chosen position for placing the piece.
+    """
 
     def __init__(self, name, game):
+        """
+        Initializes an AIPlayerBase instance.
+
+        Args:
+            name (str): Name of the player.
+            game (Game): The game instance to control.
+        """
         super().__init__(name, game)
         self.placing_piece = False
         self.current_piece = None
@@ -18,6 +39,15 @@ class AIPlayerBase(Player):
         self.choice = None
 
     def evaluate_state(self, game: Game):
+        """
+        Evaluates the state of the game and assigns a score based on various factors.
+
+        Args:
+            game (Game): The current game instance.
+
+        Returns:
+            int: The score representing the desirability of the game state.
+        """
         score = 0
 
         # 1. number of cleared rows
@@ -58,7 +88,14 @@ class AIPlayerBase(Player):
         score -= well_sums * 1
 
         return score
+    
     def update(self, update_time):
+        """
+        Updates the AI player's state and handles piece placement and movement.
+
+        Args:
+            update_time (int): Time elapsed since the last update (in milliseconds).
+        """
         if self.placing_piece:
             if self.current_piece != self.game.current_piece:
                 self.placing_piece = False
@@ -86,10 +123,24 @@ class AIPlayerBase(Player):
         super().update(update_time)
 
     def generate_command(self):
+        """
+        Generates the next command for the AI player.
+
+        This method should be implemented by subclasses.
+        """
         pass
 
     # use grass-fire algorithm to find all possible final position of a pieces.
     def get_possible_states(self, game):
+        """
+        Uses a grass-fire algorithm to find all possible final positions for the current piece.
+
+        Args:
+            game (Game): The current game instance.
+
+        Returns:
+            list of tuples: Each tuple represents a possible state (x, y, rotation) for the piece.
+        """
         piece = Piece(game.current_piece.x, game.current_piece.y,
                       game.current_piece.shape)
         piece.rotation = game.current_piece.rotation
@@ -143,6 +194,16 @@ class AIPlayerBase(Player):
         return possible_states
 
     def get_position_validity(self, game, piece):
+        """
+        Determines the validity of positions for a given piece.
+
+        Args:
+            game (Game): The current game instance.
+            piece (Piece): The piece to check.
+
+        Returns:
+            np.ndarray: A boolean array indicating the validity of positions for the piece.
+        """
         orientation = len(piece.shape[1])
         validity = np.zeros(
             (game.cols + 5, game.rows + 5, orientation),
@@ -155,6 +216,12 @@ class AIPlayerBase(Player):
         return validity
 
     def place_current_piece(self, position):
+        """
+        Places the current piece at the given position and calculates the path for placement.
+
+        Args:
+            position (tuple): The target position (x, y, rotation) for placing the piece.
+        """
         piece = Piece(self.game.current_piece.x, self.game.current_piece.y,
                       self.game.current_piece.shape)
         piece.rotation = self.game.current_piece.rotation
@@ -254,6 +321,16 @@ class AIPlayerBase(Player):
         self.command_time = self.command_interval + 1
 
     def highlight(self):
+        """
+        Highlights the position on the game grid where the AI has chosen to place the current piece.
+
+        If a choice has been made, this method creates a `Piece` object based on the choice and
+        updates the `debug_grid` of the game to visually represent the piece's placement.
+
+        The piece is colored with a distinct color (RGB: 200, 10, 200) to indicate the placement.
+
+        The piece is highlighted only if its position is within the bounds of the grid (0 ≤ x < 10 and 0 ≤ y < 20).
+        """
         if self.choice is not None:
             piece = Piece(self.choice[0], self.choice[1], self.game.current_piece.shape)
             piece.rotation = self.choice[2]

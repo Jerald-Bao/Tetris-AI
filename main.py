@@ -30,10 +30,10 @@ def main(difficulty):
     game2 = Game(seed)
     game1.player = MonteCarloPlayer("MCST - 100", game1)
     if difficulty == 0:
-        game2.player = MinimaxABPlayer("Easy", game2,1)
+        game2.player = MinimaxABPlayer("Easy", game2, 1)
         game2.player.command_interval = 350
     elif difficulty == 1:
-        game2.player = MinimaxABPlayer("Advanced", game2,2)
+        game2.player = MinimaxABPlayer("Advanced", game2, 2)
         game2.player.command_interval = 150
     else:
         game2.player = MinimaxABPlayer("Nightmare", game2, 2)

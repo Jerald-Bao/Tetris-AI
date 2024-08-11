@@ -1,3 +1,28 @@
+"""
+This module defines the Game class and related functions for a Tetris game
+implementation using Pygame. The game involves a grid where pieces fall from
+the top, and the player can move, rotate, and drop these pieces to fill rows.
+Completed rows are cleared from the grid, and the player's score increases
+accordingly.
+
+The game mechanics include:
+- A grid of 10 columns and 20 rows.
+- Falling pieces represented by the Piece class.
+- A random piece generator with a configurable seed for reproducibility.
+- Game controls for moving, rotating, and dropping pieces.
+- Checking for valid positions, row clearing, and game over conditions.
+- Drawing the game window, grid, and next pieces using Pygame.
+
+Classes:
+    - Game: The main game class handling the game state, piece movement, and
+      rendering.
+      
+Functions:
+    - draw_text_middle(text, size, color, surface): Draws text centered in
+      the game window.
+    - draw_text(text, size, color, surface, x, y): Draws text at a specified
+      position in the game window.
+"""
 import random
 
 import numpy as np
@@ -17,8 +42,37 @@ top_left_y = s_height - play_height
 
 
 class Game:
+    """
+    A class to represent the Tetris game.
 
+    Attributes:
+        grid (list): A 2D list representing the current state of the game grid.
+        debug_grid (list): A 2D list used for debugging the game grid.
+        randomizer (random.Random): A random number generator with a set seed.
+        cols (int): The number of columns in the game grid (default is 10).
+        rows (int): The number of rows in the game grid (default is 20).
+        locked_positions (dict): A dictionary storing the locked positions on
+            the grid and their corresponding colors.
+        change_piece (bool): A flag indicating whether to change the current piece.
+        run (bool): A flag indicating whether the game is running.
+        current_piece (Piece): The current piece that the player is controlling.
+        next_pieces (list): A list of the next 5 pieces that will be played.
+        player (AIPlayerBase): The player controlling the game.
+        fall_time (int): A counter for the time since the last piece drop.
+        level_time (int): A counter for the time since the level started.
+        fall_speed (float): The speed at which the current piece falls.
+        score (int): The player's current score.
+        piece_dropped (bool): A flag indicating whether the current piece has been dropped.
+        accepted_positions (np.ndarray): A 2D numpy array indicating valid positions on the grid.
+        history (list): A list storing the game history for undo functionality.
+    """
     def __init__(self, seed):
+        """
+        Initializes the Game object with a given seed for randomization.
+
+        Args:
+            seed (int): The seed for the random number generator.
+        """
         self.grid = None
         self.debug_grid = None
         self.randomizer = random.Random(seed)
@@ -43,7 +97,13 @@ class Game:
         self.history = []  # keep track of the history
 
     def update(self, win, update_time):
+        """
+        Updates the game state, including the piece position, grid, and display.
 
+        Args:
+            win (pygame.Surface): The surface on which the game is drawn.
+            update_time (int): The time elapsed since the last update.
+        """
         self.grid = self.create_grid(self.locked_positions)
         self.debug_grid = self.create_grid()
         self.fall_time += update_time
@@ -95,6 +155,13 @@ class Game:
             self.run = False
 
     def update_piece(self,shape_pos, generate_new_piece = False):
+        """
+        Locks the current piece's position on the grid and optionally generates a new piece.
+
+        Args:
+            shape_pos (list): The positions of the piece to lock on the grid.
+            generate_new_piece (bool): Whether to generate a new piece after locking the current one.
+        """
         for pos in shape_pos:
             p = (pos[0], pos[1])
             self.locked_positions[p] = self.current_piece.color
@@ -109,6 +176,15 @@ class Game:
             self.score += 10
 
     def create_grid(self, locked_positions=None):
+        """
+        Creates a grid based on the current locked positions.
+
+        Args:
+            locked_positions (dict): A dictionary of positions and colors representing locked pieces.
+
+        Returns:
+            list: A 2D list representing the grid with locked positions.
+        """
         if locked_positions is None:
             locked_positions = {}
         grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
@@ -121,6 +197,15 @@ class Game:
         return grid
 
     def convert_shape_format(self, shape: Piece):
+        """
+        Converts the shape's format to a list of grid positions.
+
+        Args:
+            shape (Piece): The piece to convert.
+
+        Returns:
+            list: A list of tuples representing the positions of the shape on the grid.
+        """
         positions = Piece.formats[(shape.shape[0],shape.rotation)].copy()
         for i, pos in enumerate(positions):
             positions[i] = (pos[0] + shape.x - 2, pos[1] + shape.y - 4)
@@ -129,11 +214,23 @@ class Game:
         return positions
 
     def update_valid_positions(self):
+        """
+        Updates the accepted positions on the grid based on locked positions.
+        """
         self.accepted_positions = np.ones((self.cols,self.rows), dtype=bool)
         for i in self.locked_positions:
             self.accepted_positions[i[0],i[1]] = False
 
     def valid_space(self, shape: Piece):
+        """
+        Checks if the current piece is in a valid position on the grid.
+
+        Args:
+            shape (Piece): The piece to check.
+
+        Returns:
+            bool: True if the piece is in a valid position, False otherwise.
+        """
         formatted = self.convert_shape_format(shape)
         # print(f"Formatted positions: {formatted}")
         # print(f"Accepted positions: {self.accepted_positions}")
@@ -147,6 +244,15 @@ class Game:
         return True
 
     def check_lost(self, positions):
+        """
+        Checks if the player has lost the game.
+
+        Args:
+            positions (dict): The locked positions on the grid.
+
+        Returns:
+            bool: True if the game is lost, False otherwise.
+        """
         for pos in positions:
             x, y = pos
             if y < 1:
@@ -154,9 +260,23 @@ class Game:
         return False
 
     def get_shape(self):
+        """
+        Returns a new random piece.
+
+        Returns:
+            Piece: A new randomly generated piece.
+        """
         return Piece.Piece(5, 0, Piece.shape_list[self.randomizer.randint(0,len(Piece.shapes)-1)])
 
     def draw_grid(self, surface, row, col):
+        """
+        Draws the grid lines on the game surface.
+
+        Args:
+            surface (pygame.Surface): The surface on which to draw the grid.
+            row (int): The number of rows in the grid.
+            col (int): The number of columns in the grid.
+        """
         sx = top_left_x
         sy = top_left_y
         for i in range(row):
@@ -169,6 +289,16 @@ class Game:
                     (sx + j * 30, sy + play_height))  # vertical lines
 
     def clear_rows(self, grid, locked):
+        """
+        Clears any full rows from the grid and shifts down the rows above.
+
+        Args:
+            grid (list): The current game grid.
+            locked (dict): The locked positions on the grid.
+
+        Returns:
+            int: The number of rows cleared.
+        """
         # need to see if row is clear the shift every other row above down one
 
         inc = 0
@@ -200,6 +330,13 @@ class Game:
                 self.score += 70
 
     def draw_next_shapes(self, shapes, surface):
+        """
+        Draws the next shapes to be played on the side of the game window.
+
+        Args:
+            shapes (list): A list of the next pieces to be played.
+            surface (pygame.Surface): The surface on which to draw the shapes.
+        """
         font = pygame.font.SysFont('comicsans', 30)
         label = font.render('Next Shapes', 1, (255, 255, 255))
 
@@ -225,6 +362,12 @@ class Game:
                                          0)
 
     def draw_window(self, surface):
+        """
+        Draws the main game window, including the grid and current piece.
+
+        Args:
+            surface (pygame.Surface): The surface on which to draw the game.
+        """
         surface.fill((0, 0, 0))
         # Tetris Title
         font = pygame.font.SysFont('comicsans', 60)
@@ -252,16 +395,25 @@ class Game:
         draw_text(f"score: {self.score}", 20, (255, 255, 255), surface, 20, 20)
 
     def move_left(self):
+        """
+        Moves the current piece one position to the left if possible.
+        """
         self.current_piece.x -= 1
         if not self.valid_space(self.current_piece):
             self.current_piece.x += 1
 
     def move_right(self):
+        """
+        Moves the current piece one position to the right if possible.
+        """
         self.current_piece.x += 1
         if not self.valid_space(self.current_piece):
             self.current_piece.x -= 1
 
     def rotate_piece(self):
+        """
+        Rotates the current piece clockwise if the new position is valid.
+        """
         self.current_piece.rotation = (self.current_piece.rotation + 1) % len(
             self.current_piece.shape[1])
         if not self.valid_space(self.current_piece):
@@ -269,6 +421,9 @@ class Game:
                 self.current_piece.shape[1])
 
     def drop_piece(self):
+        """
+        Drops the current piece by one position if possible.
+        """
         self.current_piece.y += 1
         if not self.valid_space(self.current_piece):
             self.current_piece.y -= 1
@@ -276,7 +431,17 @@ class Game:
             self.piece_dropped = True
 
     def push(self, x, y, rotation):
+        """
+        Places the current piece on the grid and updates the game state.
 
+        Args:
+            x (int): The x-coordinate of the piece.
+            y (int): The y-coordinate of the piece.
+            rotation (int): The rotation state of the piece.
+
+        Returns:
+            bool: True if the player has lost after the move, False otherwise.
+        """
         self.history.append({
             'locked_positions':
             self.locked_positions.copy(),
@@ -294,6 +459,12 @@ class Game:
         return self.check_lost(self.locked_positions)
 
     def pop(self):
+        """
+        Reverts the game state to the previous move.
+
+        Returns:
+            Game: The game instance after undoing the last move.
+        """
         if not self.history:
             return self  # no action to undo
 
@@ -311,10 +482,19 @@ class Game:
         return self
 
     def quit(self):
+        """
+        Stops the game and quits the Pygame display.
+        """
         self.run = False
         pygame.display.quit()
 
     def copy(self):
+        """
+        Creates a copy of the current game state.
+
+        Returns:
+            Game: A new Game instance with the same state as the current game.
+        """
         # create a new Game
         new_game = Game(0)
 
@@ -351,6 +531,15 @@ class Game:
 
 
 def draw_text_middle(text, size, color, surface):
+    """
+    Draws the given text centered in the middle of the game window.
+
+    Args:
+        text (str): The text to display.
+        size (int): The font size of the text.
+        color (tuple): The color of the text in RGB format.
+        surface (pygame.Surface): The surface on which to draw the text.
+    """
     font = pygame.font.SysFont('comicsans', size, bold=True)
     label = font.render(text, 1, color)
 
@@ -360,6 +549,17 @@ def draw_text_middle(text, size, color, surface):
 
 
 def draw_text(text, size, color, surface, x, y):
+    """
+    Draws the given text at the specified position on the surface.
+
+    Args:
+        text (str): The text to display.
+        size (int): The font size of the text.
+        color (tuple): The color of the text in RGB format.
+        surface (pygame.Surface): The surface on which to draw the text.
+        x (int): The x-coordinate of the position where the text will be drawn.
+        y (int): The y-coordinate of the position where the text will be drawn.
+    """
     font = pygame.font.SysFont('comicsans', size, bold=True)
     label = font.render(text, 1, color)
     surface.blit(label, (x, y))
