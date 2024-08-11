@@ -24,14 +24,18 @@ left_margin = 20
 
 def main(difficulty):
     global grid
-    seed = random.randint(0, 100000)
+    seed = 1
     game1 = Game(seed)
     game2 = Game(seed)
-    game1.player = Player("Dracula", game1)
-    game2.player = MinimaxABPlayer("Random", game2)
+    game1.player = HumanPlayer("Dracula", game1)
     if difficulty == 0:
+        game2.player = MinimaxABPlayer("Easy", game2,1)
         game2.player.command_interval = 350
     elif difficulty == 1:
+        game2.player = MinimaxABPlayer("Advanced", game2,2)
+        game2.player.command_interval = 150
+    else:
+        game2.player = MinimaxABPlayer("Nightmare", game2, 2)
         game2.player.command_interval = 150
     rect = pygame.Rect(0, 0, G.s_width, G.s_height)
     game1_surface = pygame.Surface(rect.size)
@@ -42,7 +46,7 @@ def main(difficulty):
 
     clock = pygame.time.Clock()
     while game1.run or game2.run:
-        clock.tick(60)
+        clock.tick()
         if not game1.run:
             game1_surface.fill((0, 0, 0))
             G.draw_text_middle("You Lost", 40, (255, 255, 255), game1_surface)
@@ -64,7 +68,7 @@ def main(difficulty):
 def main_menu():
     run = True
     selected_diff = 0
-    difficulty_text = ["Easy", "Medium", "Hard"]
+    difficulty_text = ["Easy", "Advance", "Nightmare"]
     while run:
         win.fill((0, 0, 0))
 

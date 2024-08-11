@@ -17,7 +17,6 @@ class AIPlayerBase(Player):
         self.choice = None
 
     def update(self, update_time):
-        pygame.event.get()
         if self.placing_piece:
             if self.current_piece != self.game.current_piece:
                 self.placing_piece = False
@@ -58,7 +57,7 @@ class AIPlayerBase(Player):
                               dtype=bool)
         # set the spawning point of the 'fire' to the piece's current location
         accessible[piece.x, piece.y, piece.rotation] = True
-        validity = self.get_position_validity(piece)
+        validity = self.get_position_validity(game, piece)
 
         hasChange = True
         while hasChange:
@@ -101,15 +100,15 @@ class AIPlayerBase(Player):
         # print(f"Possible states: {len(possible_states)}")
         return possible_states
 
-    def get_position_validity(self, piece):
+    def get_position_validity(self, game, piece):
         orientation = len(piece.shape[1])
         validity = np.zeros(
-            (self.game.cols + 5, self.game.rows + 5, orientation),
+            (game.cols + 5, game.rows + 5, orientation),
             dtype=bool)
-        for piece.x in range(-2, self.game.cols + 3):
-            for piece.y in range(0, self.game.rows + 5):
+        for piece.x in range(-2, game.cols + 3):
+            for piece.y in range(0, game.rows + 5):
                 for piece.rotation in range(orientation):
-                    if self.game.valid_space(piece):
+                    if game.valid_space(piece):
                         validity[piece.x, piece.y, piece.rotation] = True
         return validity
 
@@ -128,7 +127,7 @@ class AIPlayerBase(Player):
         directions[piece.x, piece.y, piece.rotation] = np.array([('none', 0)],
                                                                 dtype=dtype)
 
-        validity = self.get_position_validity(piece)
+        validity = self.get_position_validity(self.game, piece)
 
         # use grassfire to calculate directions
         hasChange = True

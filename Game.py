@@ -80,7 +80,7 @@ class Game:
 
         # IF PIECE HIT GROUND
         if self.change_piece:
-            self.update_piece(shape_pos)
+            self.update_piece(shape_pos, True)
             self.change_piece = False
 
 
@@ -94,14 +94,15 @@ class Game:
         if self.check_lost(self.locked_positions):
             self.run = False
 
-    def update_piece(self,shape_pos):
+    def update_piece(self,shape_pos, generate_new_piece = False):
         for pos in shape_pos:
             p = (pos[0], pos[1])
             self.locked_positions[p] = self.current_piece.color
         self.current_piece = self.next_pieces.pop(
             0)  # take next from next_pieces
-        self.next_pieces.append(
-            self.get_shape())  # add a new piece into next_pieces
+        if generate_new_piece:
+            self.next_pieces.append(
+                self.get_shape())  # add a new piece into next_pieces
 
         # call four times to check for multiple clear rows
         if self.clear_rows(self.grid, self.locked_positions):
@@ -210,7 +211,7 @@ class Game:
         offset_y = 50  # gap between pieces (in y axis)
 
         for index, shape in enumerate(shapes):
-            format = shape.shape[shape.rotation % len(shape.shape)]
+            format = shape.shape[1][shape.rotation % len(shape.shape[1])]
             shape_sy = sy + index * offset_y  # adjust each shape's y position according to index
 
             for i, line in enumerate(format):
@@ -287,7 +288,7 @@ class Game:
         # Add the piece to the grid
         self.update_piece(shape_pos)
         self.update_valid_positions()
-        self.create_grid(self.locked_positions)
+        # self.create_grid(self.locked_positions)
         return self
 
     def pop(self):
@@ -297,9 +298,12 @@ class Game:
         # restore the previous state
         last_state = self.history.pop()
         self.locked_positions = last_state['locked_positions']
+
+        self.next_pieces.insert(0,self.current_piece.copy())
+
         self.current_piece.x, self.current_piece.y,self.current_piece.shape, self.current_piece.rotation = last_state[
             'current_piece']
-        self.grid = self.create_grid(self.locked_positions)
+        # self.grid = self.create_grid(self.locked_positions)
         self.update_valid_positions()
 
         return self
@@ -318,6 +322,7 @@ class Game:
         new_game.next_pieces = [piece.copy() for piece in self.next_pieces]
         new_game.score = self.score
         new_game.run = self.run
+        new_game.locked_positions = self.locked_positions.copy()
         new_game.create_grid(new_game.locked_positions)
         new_game.update_valid_positions()
 
